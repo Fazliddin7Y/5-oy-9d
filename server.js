@@ -1,86 +1,37 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const API_BASE_URL = "http://localhost:3000";
-  
-    const searchInput = document.getElementById("searchInput");
-    const categoryContainer = document.getElementById("categoryContainer");
-    const productContainer = document.getElementById("productContainer");
-    const productDetails = document.getElementById("productDetails");
-  
-    let categories = [];
-    let currentCategory = "";
-  
-    async function fetchCategories() {
-      try {
-        const response = await fetch(`${API_BASE_URL}/categories`);
-        categories = await response.json();
-        if (categories.length > 0) {
-          currentCategory = categories[0];
-        }
-        renderCategories();
-        renderProducts();
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      }
-    }
-  
-    async function fetchProducts() {
-      try {
-        const response = await fetch(`${API_BASE_URL}/products?category=${currentCategory}`);
-        if (!response.ok) throw new Error("Failed to fetch products");
-        return await response.json();
-      } catch (error) {
-        console.error("Error fetching products:", error);
-        return [];
-      }
-    }
-  
-    function renderCategories() {
-      categoryContainer.innerHTML = "";
-      categories.forEach((category) => {
-        const button = document.createElement("button");
-        button.textContent = category;
-        button.className = `px-4 py-2 rounded ${
-          category === currentCategory
-            ? "bg-blue-500 text-white"
-            : "bg-gray-200 text-gray-800"
-        }`;
-        button.addEventListener("click", () => {
-          currentCategory = category;
-          renderProducts();
-        });
-        categoryContainer.appendChild(button);
-      });
-    }
+const express = require("express");
+const cors = require("cors");
 
-    async function renderProducts() {
-      productContainer.innerHTML = "";
-      const products = await fetchProducts();
-      const filteredProducts = products.filter((product) =>
-        product.name.toLowerCase().includes(searchInput.value.toLowerCase())
-      );
-  
-      filteredProducts.forEach((product) => {
-        const productCard = document.createElement("div");
-        productCard.className = "border border-gray-300 rounded p-4 shadow-sm";
-        productCard.innerHTML = `
-          <h3 class="text-lg font-bold">${product.name}</h3>
-          <p class="text-sm text-gray-600">${product.description}</p>
-        `;
-        productCard.addEventListener("click", () => renderProductDetails(product));
-        productContainer.appendChild(productCard);
-      });
-    }
-  
-    function renderProductDetails(product) {
-      productDetails.innerHTML = `
-        <h2 class="text-xl font-bold mb-2">${product.name}</h2>
-        <p>${product.description}</p>
-      `;
-      productDetails.classList.remove("hidden");
-    }
-  
-    searchInput.addEventListener("input", renderProducts);
-  
-    fetchCategories();
-  });
-  
+const app = express();
+const PORT = 3000;
+
+app.use(cors());
+
+const categories = ["Clothes", "Electronics", "Shoes", "Miscellaneous"];
+const products = [
+  { id: 1, name: "Sleek Wireless Computer Mouse", description: "Experience smooth and precise navigation with this modern wireless mouse, featuring a glossy finish and ergonomic design.", category: "Electronics" },
+  { id: 2, name: "Stylish Red & Silver Over-Ear Headphones", description: "Immerse yourself in superior sound quality with these sleek red and silver over-ear headphones. Designed for comfort and style.", category: "Electronics" },
+  { id: 3, name: "Modern Elegance Teal Armchair", description: "Elevate your living space with this beautifully crafted armchair, featuring a teal fabric and contemporary design.", category: "Miscellaneous" },
+  { id: 4, name: "Elegant Solid Wood Dining Table", description: "Enhance your dining space with this sleek, contemporary dining table, crafted from solid wood.", category: "Miscellaneous" },
+  { id: 5, name: "Sleek Modern Laptop with Ambient Lighting", description: "Experience next-level computing with our ultra-slim laptop, featuring a stunning display illuminated by ambient lighting.", category: "Electronics" },
+  { id: 6, name: "Running Shoes for All Terrains", description: "Conquer any terrain with these durable and comfortable running shoes, designed for optimal performance.", category: "Shoes" }
+];
+
+app.get("/categories", (req, res) => {
+  res.json(categories);
+});
+
+app.get("/products", (req, res) => {
+  const category = req.query.category;
+  if (category) {
+    const filteredProducts = products.filter(
+      (product) => product.category === category
+    );
+    res.json(filteredProducts);
+  } else {
+    res.json(products);
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
